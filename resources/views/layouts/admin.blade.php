@@ -12,12 +12,7 @@
             <a class="navbar-brand fw-bold" href="{{ route('admin.events.index') }}">UrbanNest Admin</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.events.*') ? 'active fw-bold' : '' }}" href="{{ route('admin.events.index') }}">Events</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.ticket-types.*') ? 'active fw-bold' : '' }}" href="{{ route('admin.ticket-types.index') }}">Ticket Types</a>
-                    </li>
+                    
                 </ul>
             </div>
         </div>
