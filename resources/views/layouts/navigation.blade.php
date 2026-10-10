@@ -15,6 +15,20 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if(auth()->user()->is_admin)
+                        <x-nav-link :href="route('admin.registrations.index')" :active="request()->routeIs('admin.registrations.index')">
+                            {{ __('Registrations') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.events.index')" :active="request()->routeIs('admin.events.index')">
+                            {{ __('Events') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.ticket-types.index')" :active="request()->routeIs('admin.ticket-types.index')">
+                            {{ __('Ticket Types') }}
+                        </x-nav-link>
+                    @endif
+                    <x-nav-link :href="route('events.index')" :active="request()->routeIs('events.index')">
+                        {{ __('Public Events') }}
+                    </x-nav-link>
                 </div>
             </div>
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\TicketTypeController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\TicketRegistrationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\RegistrationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicEventController::class, 'index'])->name('events.index');
@@ -26,9 +27,15 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function(){
+    Route::get('/registrations', [RegistrationsController::class, 'index'])->name('registrations.index');
+    Route::get('/registrations/export', [RegistrationsController::class, 'export'])->name('registrations.export');
     Route::resource('events', EventController::class);
     Route::resource('ticket-types', TicketTypeController::class);
 });
+
+// Route::prefix('admin')->name('admin.')->group(function () {
+    
+// });
 
 require __DIR__.'/auth.php';
