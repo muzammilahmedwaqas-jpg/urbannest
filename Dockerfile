@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Install PHP extensions (pdo_sqlite is included here)
+RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -29,17 +29,22 @@ COPY . /var/www
 # Install Composer dependencies without running artisan scripts during build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Set permissions for storage and cache
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# Set permissions for storage, cache, and database directory
+RUN mkdir -p /var/www/database \
+    && touch /var/www/database/database.sqlite \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/database \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache /var/www/database
 
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/sites-available/default
 
 EXPOSE 80
 
-# Run migrations, clear caches, start Nginx and PHP-FPM
-CMD php artisan config:clear \
+# Create SQLite database file if missing, run migrations, clear cache, and start services
+CMD touch /var/www/database/database.sqlite \
+    && chown www-data:www-data /var/www/database/database.sqlite \
+    && chmod 775 /var/www/database/database.sqlite \
+    && php artisan config:clear \
     && php artisan cache:clear \
     && php artisan migrate --force \
     && service nginx start \

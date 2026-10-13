@@ -47,7 +47,7 @@ A production-ready full-stack Laravel event management and ticketing portal feat
 - PHP 8.4+[cite: 8]
 - Composer[cite: 8]
 - Node.js & NPM
-- MySQL Database
+- SQLite (via PHP's `pdo_sqlite` extension)
 
 ### Step-by-Step Setup
 
