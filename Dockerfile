@@ -41,7 +41,7 @@ COPY nginx.conf /etc/nginx/sites-available/default
 
 EXPOSE 80
 
-# Create SQLite database file if missing, run migrations, clear cache, and start services
+# Safe startup sequence: create sqlite file, clear config cache, run migrations, start web server
 CMD touch /var/www/database/database.sqlite \
     && chown www-data:www-data /var/www/database/database.sqlite \
     && chmod 775 /var/www/database/database.sqlite \
