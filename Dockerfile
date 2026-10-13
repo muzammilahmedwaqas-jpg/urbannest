@@ -1,57 +1,46 @@
-# ---------------------------------------------------------------
-# Stage 1: build frontend assets (Vite + Tailwind)
-# ---------------------------------------------------------------
-FROM node:22-alpine AS assets
-WORKDIR /app
+FROM php:8.4-fpm
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# Install system dependencies & Nginx
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    nginx
 
-COPY vite.config.js tailwind.config.js postcss.config.js ./
-COPY resources ./resources
-RUN npm run build
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ---------------------------------------------------------------
-# Stage 2: install PHP dependencies with Composer
-# ---------------------------------------------------------------
-FROM composer:2 AS vendor
-WORKDIR /app
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --no-scripts \
-    --no-autoloader --prefer-dist --ignore-platform-reqs
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# ---------------------------------------------------------------
-# Stage 3: final runtime image (PHP-FPM + Nginx)
-# ---------------------------------------------------------------
-# PHP 8.4: Laravel 13's Symfony 8 components require PHP >= 8.4.1
-FROM php:8.4-fpm-alpine
+# Set working directory
+WORKDIR /var/www
 
-# System packages + PHP extensions Laravel needs
-# (gd is required by simplesoftwareio/simple-qrcode)
-RUN apk add --no-cache nginx libzip-dev oniguruma-dev icu-dev \
-        libpng-dev libjpeg-turbo-dev freetype-dev \
- && docker-php-ext-configure gd --with-freetype --with-jpeg \
- && docker-php-ext-install pdo_mysql mbstring zip intl bcmath opcache gd
+# Copy existing application files
+COPY . /var/www
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Install Composer dependencies without running artisan scripts during build
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-WORKDIR /var/www/html
+# Set permissions for storage and cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Application code, then dependencies and built assets from earlier stages
-COPY . .
-COPY --from=vendor /app/vendor ./vendor
-COPY --from=assets /app/public/build ./public/build
-
-RUN composer dump-autoload --optimize --no-dev \
- && php artisan package:discover --ansi \
- && chown -R www-data:www-data storage bootstrap/cache \
- && chmod -R 775 storage bootstrap/cache
-
-# Nginx site config
-COPY nginx.conf /etc/nginx/http.d/default.conf
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/sites-available/default
 
 EXPOSE 80
 
-# Run PHP-FPM in the background and Nginx in the foreground
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+# Run migrations, clear caches, start Nginx and PHP-FPM
+CMD php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan migrate --force \
+    && service nginx start \
+    && php-fpm
