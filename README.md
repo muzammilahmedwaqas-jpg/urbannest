@@ -7,7 +7,7 @@ A production-ready full-stack Laravel event management and ticketing portal feat
 ## 🌐 Live Application
 - **Live URL**: [https://urbannest-events.onrender.com](https://urbannest-events.onrender.com)
 - **Repository**: Public GitHub Repository
-- **Hosting Platform**: Render Cloud (Dockerized Nginx + PHP-FPM)
+- **Hosting Platform**: Render Cloud (Laravel 13)
 
 ---
 
