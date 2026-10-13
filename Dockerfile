@@ -1,12 +1,13 @@
 FROM php:8.4-fpm
 
-# Install system dependencies & Nginx
+# Install system dependencies, SQLite development libraries, & Nginx
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libsqlite3-dev \
     zip \
     unzip \
     nginx
@@ -14,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (pdo_sqlite is included here)
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Get latest Composer
