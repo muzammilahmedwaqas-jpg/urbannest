@@ -24,11 +24,15 @@ RUN composer install --no-dev --no-interaction --no-scripts \
 # ---------------------------------------------------------------
 # Stage 3: final runtime image (PHP-FPM + Nginx)
 # ---------------------------------------------------------------
-FROM php:8.3-fpm-alpine
+# PHP 8.4: Laravel 13's Symfony 8 components require PHP >= 8.4.1
+FROM php:8.4-fpm-alpine
 
 # System packages + PHP extensions Laravel needs
+# (gd is required by simplesoftwareio/simple-qrcode)
 RUN apk add --no-cache nginx libzip-dev oniguruma-dev icu-dev \
- && docker-php-ext-install pdo_mysql mbstring zip intl bcmath opcache
+        libpng-dev libjpeg-turbo-dev freetype-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_mysql mbstring zip intl bcmath opcache gd
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
