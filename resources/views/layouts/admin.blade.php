@@ -17,6 +17,7 @@
             </button>
             <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    @if (Auth::user()->is_admin)
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.events.*') ? 'active fw-semibold' : '' }}" href="{{ route('admin.events.index') }}">
                             Events
@@ -32,6 +33,7 @@
                             Registrations
                         </a>
                     </li>
+                    @endif
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('events.*') ? 'active fw-semibold' : '' }}" href="{{ route('events.index') }}">
                             Public Portal
