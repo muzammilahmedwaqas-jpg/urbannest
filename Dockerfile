@@ -1,3 +1,12 @@
+# Stage 1: Build frontend assets
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Stage 2: PHP Application
 FROM php:8.4-fpm
 
 # Install system dependencies, SQLite development libraries, & Nginx
@@ -27,6 +36,9 @@ WORKDIR /var/www
 # Copy existing application files
 COPY . /var/www
 
+# Copy compiled frontend assets from frontend stage
+COPY --from=frontend /app/public/build /var/www/public/build
+
 # Install Composer dependencies without running artisan scripts during build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
@@ -41,12 +53,13 @@ COPY nginx.conf /etc/nginx/sites-available/default
 
 EXPOSE 80
 
-# Safe startup sequence: create sqlite file, clear config cache, run migrations, start web server
+# Safe startup sequence: initialize sqlite, clear config cache, run migrations & seed, link storage, and start web server
 CMD touch /var/www/database/database.sqlite \
-    && chown www-data:www-data /var/www/database/database.sqlite \
-    && chmod 775 /var/www/database/database.sqlite \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/database \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache /var/www/database \
     && php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan migrate --force \
+    && php artisan migrate --force --seed \
+    && php artisan storage:link || true \
+    && php artisan optimize:clear \
     && service nginx start \
     && php-fpm
