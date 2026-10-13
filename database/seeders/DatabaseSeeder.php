@@ -4,12 +4,22 @@ namespace Database\Seeders;
 
 use App\Models\Event;
 use App\Models\TicketType;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $admin = User::firstOrNew(['email' => 'admin@gmail.com']);
+        $admin->forceFill([
+            'name' => 'Admin',
+            'password' => Hash::make('password'),
+            'is_admin' => true,
+            'email_verified_at' => now(),
+        ])->save();
+
         $event1 = Event::updateOrCreate(
             ['title' => 'UrbanNest Tech Conference 2026'],
             [
